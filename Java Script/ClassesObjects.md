@@ -1,4 +1,4 @@
-# JavaScript Classes & Objects - Interview Preparation Notes
+# JavaScript Classes & Objects
 
 ## Table of Contents
 1. [How to Create Class in JavaScript](#how-to-create-class-in-javascript)

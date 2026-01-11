@@ -1,5 +1,4 @@
-# JavaScript Function Overloading - Interview Preparation Notes
-
+# JavaScript Function Overloading
 ## Table of Contents
 1. [Can We Overload Functions in JavaScript?](#can-we-overload-functions-in-javascript)
 2. [Why Function Overloading Doesn't Work](#why-function-overloading-doesnt-work)

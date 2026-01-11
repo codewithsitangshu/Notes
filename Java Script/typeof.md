@@ -1,4 +1,4 @@
-# JavaScript `typeof` Operator - Notes
+# JavaScript `typeof` Operator
 
 ## Overview
 

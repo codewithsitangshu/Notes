@@ -1,4 +1,4 @@
-# JavaScript Inheritance - Interview Preparation Notes
+# JavaScript Inheritance
 
 ## Table of Contents
 1. [What is Inheritance in JavaScript?](#what-is-inheritance-in-javascript)
@@ -863,6 +863,1086 @@ console.log(test1.instanceMethod === test2.instanceMethod);  // false
 // Prototype methods are the same object
 console.log(test1.prototypeMethod === test2.prototypeMethod); // true
 ```
+
+---
+
+# Method Overriding
+
+**Insert this section after "Prototypal Inheritance" and before "Inheritance Best Practices"**
+
+---
+
+## Method Overriding
+
+**Method Overriding** is a fundamental OOP concept where a child class provides its own implementation of a method that already exists in the parent class. The child's version "overrides" the parent's version.
+
+### Key Concepts
+
+- Child class redefines a method from the parent class
+- The overridden method in the child class has the **same name** and **signature** as the parent method
+- When called on a child instance, the child's version executes (not the parent's)
+- You can still call the parent's version using `super.methodName()`
+- Enables **polymorphism** - different behavior for different classes
+
+---
+
+### Basic Method Overriding
+
+```javascript
+class Animal {
+    constructor(name) {
+        this.name = name;
+    }
+    
+    speak() {
+        return `${this.name} makes a sound`;
+    }
+    
+    move() {
+        return `${this.name} is moving`;
+    }
+}
+
+class Dog extends Animal {
+    // Override speak() method
+    speak() {
+        return `${this.name} barks: Woof! Woof!`;
+    }
+    
+    // Override move() method
+    move() {
+        return `${this.name} runs on four legs`;
+    }
+}
+
+class Cat extends Animal {
+    // Override speak() method
+    speak() {
+        return `${this.name} meows: Meow! Meow!`;
+    }
+    
+    // Override move() method
+    move() {
+        return `${this.name} walks gracefully`;
+    }
+}
+
+// Usage
+const animal = new Animal('Generic Animal');
+const dog = new Dog('Buddy');
+const cat = new Cat('Whiskers');
+
+console.log(animal.speak()); // Generic Animal makes a sound
+console.log(dog.speak());    // Buddy barks: Woof! Woof!
+console.log(cat.speak());    // Whiskers meows: Meow! Meow!
+
+console.log(animal.move());  // Generic Animal is moving
+console.log(dog.move());     // Buddy runs on four legs
+console.log(cat.move());     // Whiskers walks gracefully
+```
+
+---
+
+### Method Overriding with `super`
+
+You can call the parent's method from within the overridden method using `super.methodName()`.
+
+```javascript
+class Vehicle {
+    constructor(brand) {
+        this.brand = brand;
+    }
+    
+    start() {
+        return `${this.brand} engine is starting`;
+    }
+    
+    getInfo() {
+        return `Vehicle: ${this.brand}`;
+    }
+}
+
+class Car extends Vehicle {
+    constructor(brand, model) {
+        super(brand);
+        this.model = model;
+    }
+    
+    // Override start() and extend parent functionality
+    start() {
+        const parentStart = super.start(); // Call parent method
+        return `${parentStart}, car ${this.model} is ready`;
+    }
+    
+    // Override getInfo() and add more details
+    getInfo() {
+        const parentInfo = super.getInfo(); // Call parent method
+        return `${parentInfo}, Model: ${this.model}`;
+    }
+}
+
+class ElectricCar extends Car {
+    constructor(brand, model, batteryCapacity) {
+        super(brand, model);
+        this.batteryCapacity = batteryCapacity;
+    }
+    
+    // Override start() from Car
+    start() {
+        const carStart = super.start(); // Call Car's start()
+        return `${carStart}, charging ${this.batteryCapacity}kWh battery`;
+    }
+    
+    // Override getInfo() from Car
+    getInfo() {
+        const carInfo = super.getInfo(); // Call Car's getInfo()
+        return `${carInfo}, Battery: ${this.batteryCapacity}kWh`;
+    }
+}
+
+// Usage
+const vehicle = new Vehicle('Generic');
+const car = new Car('Toyota', 'Camry');
+const tesla = new ElectricCar('Tesla', 'Model 3', 75);
+
+console.log(vehicle.start());
+// Generic engine is starting
+
+console.log(car.start());
+// Generic engine is starting, car Camry is ready
+
+console.log(tesla.start());
+// Generic engine is starting, car Model 3 is ready, charging 75kWh battery
+
+console.log(vehicle.getInfo()); // Vehicle: Generic
+console.log(car.getInfo());     // Vehicle: Toyota, Model: Camry
+console.log(tesla.getInfo());   // Vehicle: Tesla, Model: Model 3, Battery: 75kWh
+```
+
+---
+
+### Constructor Overriding
+
+Constructors can also be overridden. The child class constructor **must** call `super()` before accessing `this`.
+
+```javascript
+class User {
+    constructor(username, email) {
+        this.username = username;
+        this.email = email;
+        this.createdAt = new Date();
+        console.log('User constructor called');
+    }
+    
+    displayInfo() {
+        return `User: ${this.username}, Email: ${this.email}`;
+    }
+}
+
+class Admin extends User {
+    constructor(username, email, permissions) {
+        // Must call super() first!
+        super(username, email);
+        this.permissions = permissions;
+        this.role = 'admin';
+        console.log('Admin constructor called');
+    }
+    
+    // Override displayInfo()
+    displayInfo() {
+        const userInfo = super.displayInfo();
+        return `${userInfo}, Role: ${this.role}, Permissions: ${this.permissions.join(', ')}`;
+    }
+}
+
+// Usage
+const admin = new Admin('john_admin', 'john@example.com', ['read', 'write', 'delete']);
+// Output:
+// User constructor called
+// Admin constructor called
+
+console.log(admin.displayInfo());
+// User: john_admin, Email: john@example.com, Role: admin, Permissions: read, write, delete
+```
+
+---
+
+### Test Automation Examples
+
+#### Example 1: Page Object Pattern with Method Overriding
+
+```javascript
+class BasePage {
+    constructor(page) {
+        this.page = page;
+        this.timeout = 30000;
+    }
+    
+    async navigate(url) {
+        await this.page.goto(url, { timeout: this.timeout });
+        console.log(`Navigated to: ${url}`);
+    }
+    
+    async waitForPageLoad() {
+        await this.page.waitForLoadState('networkidle');
+        console.log('Base page loaded');
+    }
+    
+    async getPageTitle() {
+        return await this.page.title();
+    }
+}
+
+class LoginPage extends BasePage {
+    constructor(page) {
+        super(page);
+        this.url = 'https://example.com/login';
+        this.usernameField = '#username';
+        this.passwordField = '#password';
+        this.loginButton = '#login-btn';
+    }
+    
+    // Override navigate to use predefined URL
+    async navigate() {
+        await super.navigate(this.url); // Call parent navigate
+        await this.waitForLoginForm();
+    }
+    
+    // Override waitForPageLoad with login-specific logic
+    async waitForPageLoad() {
+        await super.waitForPageLoad(); // Call parent method
+        await this.page.waitForSelector(this.loginButton);
+        console.log('Login page fully loaded');
+    }
+    
+    async waitForLoginForm() {
+        await this.page.waitForSelector(this.usernameField);
+        console.log('Login form is visible');
+    }
+    
+    async login(username, password) {
+        await this.page.fill(this.usernameField, username);
+        await this.page.fill(this.passwordField, password);
+        await this.page.click(this.loginButton);
+    }
+}
+
+class SecureLoginPage extends LoginPage {
+    constructor(page) {
+        super(page);
+        this.captchaField = '#captcha';
+        this.twoFactorField = '#two-factor-code';
+    }
+    
+    // Override waitForPageLoad with additional security checks
+    async waitForPageLoad() {
+        await super.waitForPageLoad(); // Call LoginPage's waitForPageLoad
+        await this.page.waitForSelector(this.captchaField);
+        console.log('Secure login page loaded with captcha');
+    }
+    
+    // Override login to handle captcha and 2FA
+    async login(username, password, captcha, twoFactorCode) {
+        await this.page.fill(this.usernameField, username);
+        await this.page.fill(this.passwordField, password);
+        await this.page.fill(this.captchaField, captcha);
+        await this.page.click(this.loginButton);
+        
+        // Handle 2FA if required
+        if (twoFactorCode) {
+            await this.page.waitForSelector(this.twoFactorField);
+            await this.page.fill(this.twoFactorField, twoFactorCode);
+            await this.page.click('#verify-2fa');
+        }
+    }
+}
+
+// Usage
+const loginPage = new LoginPage(page);
+await loginPage.navigate();
+await loginPage.waitForPageLoad();
+await loginPage.login('testuser', 'password123');
+
+const secureLoginPage = new SecureLoginPage(page);
+await secureLoginPage.navigate();
+await secureLoginPage.waitForPageLoad();
+await secureLoginPage.login('testuser', 'password123', 'ABC123', '654321');
+```
+
+#### Example 2: API Client with Method Overriding
+
+```javascript
+class APIClient {
+    constructor(baseURL) {
+        this.baseURL = baseURL;
+        this.headers = {
+            'Content-Type': 'application/json'
+        };
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        console.log(`Making request to: ${url}`);
+        
+        const config = {
+            ...options,
+            headers: { ...this.headers, ...options.headers }
+        };
+        
+        const response = await fetch(url, config);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    }
+    
+    async get(endpoint) {
+        return this.request(endpoint, { method: 'GET' });
+    }
+}
+
+class AuthenticatedAPIClient extends APIClient {
+    constructor(baseURL, token) {
+        super(baseURL);
+        this.token = token;
+        this.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Override request to add token refresh logic
+    async request(endpoint, options = {}) {
+        try {
+            return await super.request(endpoint, options);
+        } catch (error) {
+            // If unauthorized, try to refresh token
+            if (error.message.includes('401')) {
+                console.log('Token expired, refreshing...');
+                await this.refreshToken();
+                return await super.request(endpoint, options); // Retry
+            }
+            throw error;
+        }
+    }
+    
+    async refreshToken() {
+        // Token refresh logic
+        console.log('Token refreshed');
+        this.headers['Authorization'] = `Bearer ${this.token}`;
+    }
+}
+
+class RetryableAPIClient extends AuthenticatedAPIClient {
+    constructor(baseURL, token, maxRetries = 3) {
+        super(baseURL, token);
+        this.maxRetries = maxRetries;
+    }
+    
+    // Override request to add retry logic
+    async request(endpoint, options = {}) {
+        let lastError;
+        
+        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+            try {
+                return await super.request(endpoint, options);
+            } catch (error) {
+                lastError = error;
+                console.log(`Attempt ${attempt} failed: ${error.message}`);
+                
+                if (attempt < this.maxRetries) {
+                    await this.wait(1000 * attempt); // Exponential backoff
+                }
+            }
+        }
+        
+        throw lastError;
+    }
+    
+    wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Usage
+const basicClient = new APIClient('https://api.example.com');
+const authClient = new AuthenticatedAPIClient('https://api.example.com', 'token123');
+const retryClient = new RetryableAPIClient('https://api.example.com', 'token123', 5);
+
+await basicClient.get('/users/1');     // Basic request
+await authClient.get('/users/1');      // With auth + token refresh
+await retryClient.get('/users/1');     // With auth + token refresh + retry
+```
+
+#### Example 3: Test Reporter with Method Overriding
+
+```javascript
+class BaseReporter {
+    constructor(testName) {
+        this.testName = testName;
+        this.startTime = null;
+        this.endTime = null;
+    }
+    
+    start() {
+        this.startTime = Date.now();
+        console.log(`\n[TEST STARTED] ${this.testName}`);
+    }
+    
+    end(status) {
+        this.endTime = Date.now();
+        const duration = this.endTime - this.startTime;
+        console.log(`[TEST ${status}] ${this.testName} (${duration}ms)`);
+    }
+    
+    log(message) {
+        console.log(`  ${message}`);
+    }
+}
+
+class DetailedReporter extends BaseReporter {
+    constructor(testName) {
+        super(testName);
+        this.steps = [];
+    }
+    
+    // Override start to add more details
+    start() {
+        super.start(); // Call parent start
+        console.log(`  Test Suite: Automation Tests`);
+        console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`  Start Time: ${new Date(this.startTime).toISOString()}`);
+    }
+    
+    // Override end to include step summary
+    end(status) {
+        super.end(status); // Call parent end
+        console.log(`  Total Steps: ${this.steps.length}`);
+        console.log(`  Steps Executed:`);
+        this.steps.forEach((step, index) => {
+            console.log(`    ${index + 1}. ${step}`);
+        });
+    }
+    
+    // Override log to track steps
+    log(message) {
+        super.log(message); // Call parent log
+        this.steps.push(message);
+    }
+}
+
+class HTMLReporter extends DetailedReporter {
+    constructor(testName, outputFile) {
+        super(testName);
+        this.outputFile = outputFile;
+        this.htmlContent = '';
+    }
+    
+    // Override start to initialize HTML
+    start() {
+        super.start(); // Call parent start
+        this.htmlContent += `<div class="test-report">`;
+        this.htmlContent += `<h2>${this.testName}</h2>`;
+        this.htmlContent += `<p>Started: ${new Date(this.startTime).toISOString()}</p>`;
+    }
+    
+    // Override end to save HTML file
+    end(status) {
+        super.end(status); // Call parent end
+        
+        const duration = this.endTime - this.startTime;
+        this.htmlContent += `<p>Status: <strong>${status}</strong></p>`;
+        this.htmlContent += `<p>Duration: ${duration}ms</p>`;
+        this.htmlContent += `<ul>`;
+        this.steps.forEach(step => {
+            this.htmlContent += `<li>${step}</li>`;
+        });
+        this.htmlContent += `</ul></div>`;
+        
+        console.log(`  HTML Report saved: ${this.outputFile}`);
+        // In real scenario: fs.writeFileSync(this.outputFile, this.htmlContent);
+    }
+    
+    // Override log to add HTML formatting
+    log(message) {
+        super.log(message); // Call parent log
+        // HTML-specific logging handled in end()
+    }
+}
+
+// Usage
+const reporter1 = new BaseReporter('Login Test');
+reporter1.start();
+reporter1.log('Navigate to login page');
+reporter1.log('Fill credentials');
+reporter1.log('Click login button');
+reporter1.end('PASSED');
+
+const reporter2 = new DetailedReporter('Checkout Test');
+reporter2.start();
+reporter2.log('Add item to cart');
+reporter2.log('Proceed to checkout');
+reporter2.log('Fill payment details');
+reporter2.end('PASSED');
+
+const reporter3 = new HTMLReporter('Registration Test', 'report.html');
+reporter3.start();
+reporter3.log('Navigate to registration page');
+reporter3.log('Fill user details');
+reporter3.log('Submit form');
+reporter3.end('FAILED');
+```
+
+---
+
+### Method Overriding vs Method Overloading
+
+**Important**: JavaScript does **NOT** support traditional method overloading (multiple methods with the same name but different parameters).
+
+```javascript
+class Calculator {
+    // âŒ This is NOT method overloading
+    add(a, b) {
+        return a + b;
+    }
+    
+    // This will REPLACE the previous add() method
+    add(a, b, c) {
+        return a + b + c;
+    }
+}
+
+const calc = new Calculator();
+console.log(calc.add(2, 3));     // NaN (c is undefined)
+console.log(calc.add(2, 3, 4));  // 9
+
+// âœ… Workaround: Use default parameters or rest parameters
+class BetterCalculator {
+    add(...numbers) {
+        return numbers.reduce((sum, num) => sum + num, 0);
+    }
+}
+
+const betterCalc = new BetterCalculator();
+console.log(betterCalc.add(2, 3));        // 5
+console.log(betterCalc.add(2, 3, 4));     // 9
+console.log(betterCalc.add(1, 2, 3, 4));  // 10
+```
+
+---
+
+### Common Pitfalls
+
+#### Pitfall 1: Forgetting to call `super()`
+
+```javascript
+class Parent {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+class Child extends Parent {
+    constructor(name, age) {
+        // âŒ ERROR: Must call super() before accessing 'this'
+        this.age = age; // ReferenceError!
+        super(name);
+    }
+}
+
+// âœ… Correct version
+class CorrectChild extends Parent {
+    constructor(name, age) {
+        super(name);    // Call super first
+        this.age = age; // Then use 'this'
+    }
+}
+```
+
+#### Pitfall 2: Infinite recursion
+
+```javascript
+class Parent {
+    greet() {
+        return 'Hello from Parent';
+    }
+}
+
+class Child extends Parent {
+    greet() {
+        // âŒ Infinite loop - calls itself, not parent
+        return this.greet() + ' and Child'; // Stack overflow!
+    }
+}
+
+// âœ… Correct version
+class CorrectChild extends Parent {
+    greet() {
+        return super.greet() + ' and Child'; // Calls parent method
+    }
+}
+```
+
+#### Pitfall 3: Overriding without understanding parent behavior
+
+```javascript
+class DataValidator {
+    validate(data) {
+        if (!data) {
+            throw new Error('Data is required');
+        }
+        // More validation logic
+        return true;
+    }
+}
+
+class StrictValidator extends DataValidator {
+    // âŒ Bad: Completely replaces parent validation
+    validate(data) {
+        if (data.length < 5) {
+            throw new Error('Data too short');
+        }
+        return true;
+    }
+    // Lost the parent's null check!
+}
+
+// âœ… Good: Extends parent validation
+class BetterStrictValidator extends DataValidator {
+    validate(data) {
+        super.validate(data); // Keep parent validation
+        if (data.length < 5) {
+            throw new Error('Data too short');
+        }
+        return true;
+    }
+}
+```
+
+---
+
+### Interview Questions on Method Overriding
+
+#### Q1: What is method overriding in JavaScript?
+
+**Answer**: Method overriding is when a child class provides its own implementation of a method that already exists in the parent class. When you call the method on a child instance, the child's version executes instead of the parent's version. You can still access the parent's method using `super.methodName()`.
+
+```javascript
+class Parent {
+    greet() { return 'Hello from Parent'; }
+}
+
+class Child extends Parent {
+    greet() { return 'Hello from Child'; } // Overrides parent method
+}
+
+const child = new Child();
+console.log(child.greet()); // "Hello from Child"
+```
+
+---
+
+#### Q2: How do you call the parent's overridden method from a child class?
+
+**Answer**: Use the `super` keyword followed by the method name: `super.methodName()`.
+
+```javascript
+class Parent {
+    introduce() {
+        return 'I am the parent';
+    }
+}
+
+class Child extends Parent {
+    introduce() {
+        const parentIntro = super.introduce(); // Call parent method
+        return `${parentIntro} and I am the child`;
+    }
+}
+
+const child = new Child();
+console.log(child.introduce());
+// "I am the parent and I am the child"
+```
+
+---
+
+#### Q3: Can you override the constructor in JavaScript?
+
+**Answer**: Yes, you can override the constructor in a child class, but you **must** call `super()` before accessing `this`. The `super()` call invokes the parent class constructor.
+
+```javascript
+class Parent {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+class Child extends Parent {
+    constructor(name, age) {
+        super(name);    // Must call super() first
+        this.age = age; // Then can use 'this'
+    }
+}
+```
+
+---
+
+#### Q4: What's the difference between method overriding and method overloading?
+
+**Answer**: 
+- **Method Overriding**: Child class redefines a parent method (same name, same signature). JavaScript **fully supports** this.
+- **Method Overloading**: Multiple methods with the same name but different parameters. JavaScript does **NOT support** traditional method overloading.
+
+```javascript
+// Method Overriding (Supported)
+class Parent {
+    greet() { return 'Hello'; }
+}
+class Child extends Parent {
+    greet() { return 'Hi'; } // Overrides
+}
+
+// Method Overloading (NOT Supported)
+class Calculator {
+    add(a, b) { return a + b; }
+    add(a, b, c) { return a + b + c; } // This REPLACES the previous add()
+}
+
+// Workaround using rest parameters
+class BetterCalculator {
+    add(...nums) { return nums.reduce((sum, n) => sum + n, 0); }
+}
+```
+
+---
+
+#### Q5: Can you override static methods in JavaScript?
+
+**Answer**: Yes, static methods can be overridden in child classes. They work similarly to instance method overriding, but are called on the class itself, not on instances.
+
+```javascript
+class Parent {
+    static getType() {
+        return 'Parent Type';
+    }
+}
+
+class Child extends Parent {
+    static getType() {
+        return 'Child Type'; // Overrides parent static method
+    }
+}
+
+console.log(Parent.getType()); // "Parent Type"
+console.log(Child.getType());  // "Child Type"
+
+// Can also call parent static method
+class AnotherChild extends Parent {
+    static getType() {
+        return super.getType() + ' Extended';
+    }
+}
+console.log(AnotherChild.getType()); // "Parent Type Extended"
+```
+
+---
+
+#### Q6: What happens if you don't override a method in a child class?
+
+**Answer**: If a child class doesn't override a method, it inherits the parent's method and uses that implementation when called.
+
+```javascript
+class Animal {
+    eat() {
+        return 'Eating...';
+    }
+    
+    sleep() {
+        return 'Sleeping...';
+    }
+}
+
+class Dog extends Animal {
+    // Only override eat(), inherit sleep()
+    eat() {
+        return 'Dog is eating';
+    }
+}
+
+const dog = new Dog();
+console.log(dog.eat());   // "Dog is eating" (overridden)
+console.log(dog.sleep()); // "Sleeping..." (inherited from Animal)
+```
+
+---
+
+#### Q7: How does method overriding enable polymorphism?
+
+**Answer**: Method overriding enables polymorphism by allowing different classes to respond to the same method call in different ways. This allows you to write code that works with the parent type but behaves differently based on the actual child type at runtime.
+
+```javascript
+class Shape {
+    area() {
+        return 0;
+    }
+}
+
+class Circle extends Shape {
+    constructor(radius) {
+        super();
+        this.radius = radius;
+    }
+    
+    area() {
+        return Math.PI * this.radius * this.radius;
+    }
+}
+
+class Rectangle extends Shape {
+    constructor(width, height) {
+        super();
+        this.width = width;
+        this.height = height;
+    }
+    
+    area() {
+        return this.width * this.height;
+    }
+}
+
+// Polymorphism in action
+function printArea(shape) {
+    console.log(`Area: ${shape.area()}`); // Works with any Shape
+}
+
+printArea(new Circle(5));         // Area: 78.54
+printArea(new Rectangle(4, 6));   // Area: 24
+```
+
+---
+
+#### Q8: In a test automation framework, when would you use method overriding?
+
+**Answer**: Method overriding is commonly used in test automation for:
+
+1. **Page Object Model**: Different pages override base page methods with page-specific behavior
+2. **Custom Waits**: Override waitForPageLoad() with specific element checks
+3. **Authentication**: Override login() for different authentication mechanisms (SSO, 2FA, etc.)
+4. **Reporting**: Override report methods for different output formats (HTML, JSON, XML)
+5. **API Clients**: Override request() to add retry logic, caching, or custom headers
+
+```javascript
+// Example: Different login mechanisms
+class BasePage {
+    async login(username, password) {
+        await this.fillField('#username', username);
+        await this.fillField('#password', password);
+        await this.click('#login');
+    }
+}
+
+class SSOLoginPage extends BasePage {
+    async login(username, password) {
+        await this.click('#sso-login'); // Different flow
+        // SSO-specific logic
+    }
+}
+
+class TwoFactorLoginPage extends BasePage {
+    async login(username, password, code) {
+        await super.login(username, password); // Use base login
+        await this.fillField('#2fa-code', code);
+        await this.click('#verify');
+    }
+}
+```
+
+---
+
+#### Q9: What's the difference between overriding an instance method vs a static method?
+
+**Answer**:
+- **Instance methods** are overridden and called on object instances
+- **Static methods** are overridden and called on the class itself
+- Both use the same syntax with `super` to call parent methods
+
+```javascript
+class Parent {
+    // Instance method
+    instanceMethod() {
+        return 'Parent instance';
+    }
+    
+    // Static method
+    static staticMethod() {
+        return 'Parent static';
+    }
+}
+
+class Child extends Parent {
+    // Override instance method
+    instanceMethod() {
+        return 'Child instance';
+    }
+    
+    // Override static method
+    static staticMethod() {
+        return 'Child static';
+    }
+}
+
+const child = new Child();
+console.log(child.instanceMethod());  // "Child instance"
+console.log(Child.staticMethod());    // "Child static"
+
+// Can't call static method on instance
+// child.staticMethod(); // TypeError
+```
+
+---
+
+#### Q10: Can you prevent a method from being overridden in JavaScript?
+
+**Answer**: JavaScript doesn't have a built-in `final` keyword like Java, but you can achieve similar behavior using several techniques:
+
+**Option 1**: Use `Object.freeze()` on the prototype
+```javascript
+class Parent {
+    finalMethod() {
+        return 'Cannot override this';
+    }
+}
+
+Object.freeze(Parent.prototype);
+
+class Child extends Parent {
+    finalMethod() {  // This won't work in strict mode
+        return 'Trying to override';
+    }
+}
+```
+
+**Option 2**: Check method source in constructor
+```javascript
+class Parent {
+    constructor() {
+        if (this.criticalMethod !== Parent.prototype.criticalMethod) {
+            throw new Error('criticalMethod cannot be overridden');
+        }
+    }
+    
+    criticalMethod() {
+        return 'Critical logic';
+    }
+}
+```
+
+**Option 3**: Use private methods (recommended with modern JavaScript)
+```javascript
+class Parent {
+    #privateMethod() {
+        return 'Cannot be overridden';
+    }
+    
+    publicMethod() {
+        return this.#privateMethod();
+    }
+}
+```
+
+---
+
+### Best Practices for Method Overriding
+
+1. **âœ… Always call `super.methodName()` when extending functionality**
+   ```javascript
+   // Good
+   class Child extends Parent {
+       method() {
+           super.method(); // Keep parent behavior
+           // Add child-specific logic
+       }
+   }
+   ```
+
+2. **âœ… Maintain the same method signature**
+   ```javascript
+   class Parent {
+       process(data, options) { }
+   }
+   
+   // Good - same signature
+   class Child extends Parent {
+       process(data, options) {
+           super.process(data, options);
+       }
+   }
+   ```
+
+3. **âœ… Document why you're overriding**
+   ```javascript
+   class SecureLoginPage extends LoginPage {
+       /**
+        * Override login to add 2FA verification
+        * Extends parent login with two-factor authentication
+        */
+       async login(username, password, twoFactorCode) {
+           await super.login(username, password);
+           await this.verify2FA(twoFactorCode);
+       }
+   }
+   ```
+
+4. **âœ… Keep overridden methods focused**
+   ```javascript
+   // Good - clear purpose
+   class Child extends Parent {
+       validate() {
+           super.validate();
+           this.validateSpecificRules();
+       }
+   }
+   
+   // Bad - doing too much
+   class Child extends Parent {
+       validate() {
+           super.validate();
+           this.validateSpecificRules();
+           this.sendEmail();
+           this.logToDatabase();
+           this.generateReport();
+       }
+   }
+   ```
+
+5. **âŒ Don't override methods you don't need to change**
+   ```javascript
+   // Bad - unnecessary override
+   class Child extends Parent {
+       method() {
+           return super.method(); // Just calling parent, no point
+       }
+   }
+   
+   // Good - only override when needed
+   class Child extends Parent {
+       // Inherit parent's method as-is
+   }
+   ```
+
+---
+
+### Summary
+
+**Method Overriding** is a powerful OOP feature that allows child classes to customize parent behavior while maintaining the inheritance relationship. Key points:
+
+- âœ… Child method replaces parent method with same name
+- âœ… Use `super.methodName()` to call the parent version
+- âœ… Enables polymorphism - different behavior for different types
+- âœ… Constructor overriding requires calling `super()` first
+- âœ… Common in test frameworks for page-specific behavior
+- âœ… JavaScript supports method overriding but NOT method overloading
+- âœ… Keep overridden methods focused and well-documented
 
 ---
 
